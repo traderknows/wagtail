@@ -69,3 +69,4 @@ class SnippetChooserViewSet(ChooserViewSet):
     choose_results_view_class = ChooseResultsView
     chosen_view_class = SnippetChosenView
     chosen_multiple_view_class = SnippetChosenMultipleView
+    per_page = 40
