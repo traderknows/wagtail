@@ -178,7 +178,7 @@ class WorkflowObjectsToModeratePanel(Component):
             )
             .order_by("-started_at")
         )
-        for state in states:
+        for state in states[:40]:
             obj = state.revision.content_object
             actions = state.task.specific.get_actions(obj, request.user)
             workflow_tasks = state.workflow_state.all_tasks_with_status()
