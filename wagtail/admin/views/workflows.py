@@ -2,7 +2,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Count, OuterRef
+from django.db.models import OuterRef, Subquery, PositiveIntegerField
 from django.db.models.functions import Lower
 from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
@@ -48,6 +48,13 @@ from wagtail.workflows import get_task_types
 task_permission_checker = PermissionPolicyChecker(task_permission_policy)
 
 
+class SubqueryCount(Subquery):
+    # Custom Count function to just perform simple count on any queryset without grouping.
+    # https://stackoverflow.com/a/47371514/1164966
+    template = "(SELECT count(*) FROM (%(subquery)s) _count)"
+    output_field = PositiveIntegerField()
+
+
 class Index(IndexView):
     permission_policy = workflow_permission_policy
     model = Workflow
@@ -69,8 +76,8 @@ class Index(IndexView):
             queryset = queryset.filter(active=True)
         content_types = WorkflowContentType.objects.filter(
             workflow=OuterRef("pk")
-        ).values_list("pk", flat=True)
-        queryset = queryset.annotate(content_types=Count(content_types))
+        )
+        queryset = queryset.annotate(content_types=SubqueryCount(content_types))
         return queryset
 
     def get_context_data(self, **kwargs):

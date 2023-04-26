@@ -172,7 +172,7 @@ class WorkflowObjectsToModeratePanel(Component):
             )
             .order_by("-started_at")
         )
-        for state in states:
+        for state in states[:40]:
             obj = state.revision.content_object
             # Skip task states where the revision's GenericForeignKey points to
             # a nonexistent object. This can happen if the model does not define
