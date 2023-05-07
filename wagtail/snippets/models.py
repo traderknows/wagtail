@@ -72,18 +72,18 @@ class SnippetAdminURLFinder:
             )
 
 
-def register_snippet(model, viewset=None):
+def register_snippet(model, viewset=None, chooser_viewset=None):
     if DEFER_REGISTRATION:
         # Models may not have been fully loaded yet, so defer registration until they are -
         # add it to the list of registrations to be processed by register_deferred_snippets
-        DEFERRED_REGISTRATIONS.append((model, viewset))
+        DEFERRED_REGISTRATIONS.append((model, viewset, chooser_viewset))
     else:
-        _register_snippet_immediately(model, viewset)
+        _register_snippet_immediately(model, viewset, chooser_viewset)
 
     return model
 
 
-def _register_snippet_immediately(model, viewset=None):
+def _register_snippet_immediately(model, viewset=None, chooser_viewset=None):
     # Register the viewset and formfield for this snippet model,
     # skipping the check for whether models are loaded
 
@@ -112,14 +112,19 @@ def _register_snippet_immediately(model, viewset=None):
         url_prefix=model.get_admin_base_path(),
     )
 
-    chooser_viewset = SnippetChooserViewSet(
+    if chooser_viewset is None:
+        chooser_viewset = SnippetChooserViewSet
+    elif isinstance(chooser_viewset, str):
+        chooser_viewset = import_string(chooser_viewset)
+
+    admin_chooser_viewset = chooser_viewset(
         f"wagtailsnippetchoosers_{model._meta.app_label}_{model._meta.model_name}",
         model=model,
         url_prefix=f"snippets/choose/{model._meta.app_label}/{model._meta.model_name}",
     )
 
     viewsets.register(admin_viewset)
-    viewsets.register(chooser_viewset)
+    viewsets.register(admin_chooser_viewset)
 
     SNIPPET_MODELS.append(model)
     SNIPPET_MODELS.sort(key=lambda x: x._meta.verbose_name)
@@ -159,8 +164,8 @@ def register_deferred_snippets():
     """
     global DEFER_REGISTRATION
     DEFER_REGISTRATION = False
-    for model, viewset in DEFERRED_REGISTRATIONS:
-        _register_snippet_immediately(model, viewset)
+    for model, viewset, chooser_viewset in DEFERRED_REGISTRATIONS:
+        _register_snippet_immediately(model, viewset, chooser_viewset)
 
 
 def create_extra_permissions(*args, using=DEFAULT_DB_ALIAS, **kwargs):
