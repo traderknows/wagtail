@@ -59,9 +59,8 @@ class DeleteBulkAction(BeforeAfterHookMixin, SnippetBulkAction):
 
     @classmethod
     def execute_action(cls, objects, user=None, **kwargs):
-        kwargs["self"].model.objects.filter(
-            pk__in=[snippet.pk for snippet in objects]
-        ).delete()
+        for o in objects:
+            o.delete()
         return len(objects), 0
 
     def get_context_data(self, **kwargs):
