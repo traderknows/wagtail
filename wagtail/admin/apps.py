@@ -12,5 +12,5 @@ class WagtailAdminAppConfig(AppConfig):
 
     def ready(self):
         from wagtail.admin.signal_handlers import register_signal_handlers
-
-        register_signal_handlers()
+        # SKIP SIGNAL EMAIL NOTIFICATION
+        # register_signal_handlers()
